@@ -1,0 +1,8 @@
+[tools]
+python = "3.14"
+node = "25"
+pnpm = "10"
+uv = "latest"
+
+[env]
+PYTHONUNBUFFERED = "1"
