@@ -1,0 +1,92 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Lesson",
+    "type": "object",
+    "required": [
+        "lesson_id",
+        "goal",
+        "title",
+        "scope",
+        "concept",
+        "example",
+        "task"
+    ],
+    "properties": {
+        "lesson_id": {
+            "type": "string"
+        },
+        "goal": {
+            "type": "string"
+        },
+        "title": {
+            "type": "string"
+        },
+        "scope": {
+            "type": "object",
+            "required": [
+                "prerequisite_concepts",
+                "out_of_scope"
+            ],
+            "properties": {
+                "prerequisite_concepts": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "out_of_scope": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "concept": {
+            "type": "object",
+            "required": [
+                "explanation",
+                "key_points"
+            ],
+            "properties": {
+                "explanation": {
+                    "type": "string"
+                },
+                "key_points": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "example": {
+            "type": "object",
+            "required": [
+                "input",
+                "output",
+                "explanation"
+            ],
+            "properties": {
+                "prompt": {
+                    "type": "string"
+                },
+                "instructions": {
+                    "type": "string"
+                },
+                "response_type": {
+                    "type": "string",
+                    "enum": [
+                        "code",
+                        "explanation",
+                        "choice",
+                        "short_ansert"
+                    ]
+                },
+                "expected_format": {
+                    "type": "string"
+                }
+            }
+        }
+    }
+}

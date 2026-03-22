@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Evaluation",
+    "type": "object",
+    "required": [
+        "score",
+        "feedback",
+        "correct",
+        "next_action"
+    ],
+    "properties": {
+        "score": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+        },
+        "feedback": {
+            "type": "string"
+        },
+        "correct": {
+            "type": "boolean"
+        },
+        "next_action": {
+            "type": "string",
+            "enum": [
+                "retry",
+                "continue",
+                "review"
+            ]
+        },
+        "misconception": {
+            "type": [
+                "string",
+                "null"
+            ]
+        }
+    }
+}
