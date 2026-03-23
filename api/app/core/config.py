@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 class Settings(BaseSettings):
@@ -12,14 +12,16 @@ class Settings(BaseSettings):
 
     MODEL_PROVIDER: str = "openai"
 
-    OPEN_API_KEY: str | None = None
+    OPENAI_API_KEY: str | None = None
 
     ATLAS_BASE_URL: str | None = None
     OLLAMA_BASE_URL: str | None = None
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 @lru_cache
 def get_settings() -> Settings:

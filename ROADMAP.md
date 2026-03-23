@@ -1,6 +1,6 @@
 # Owl of Athens Roadmap
 
-Last updated: 2026-03-22
+Last updated: 2026-03-23
 
 ## Purpose (Grounding Contract)
 
@@ -43,7 +43,7 @@ contract wins until the contract is explicitly updated.
 
 ### Lesson Contract (`core/contracts/lesson.schema.json`)
 
-Status: **Committed, needs correction**
+Status: **Committed, partially corrected, still needs correction**
 
 Target shape:
 
@@ -81,14 +81,14 @@ Design decisions locked:
 - `scope` is required. A lesson that does not declare its boundaries will over-generate.
 
 Current known defects in the committed file:
-- `example` is malformed and currently contains task-shaped properties instead of
-  `input`, `output`, and `explanation`.
-- `task` is required but not actually defined in `properties`.
-- `short_answer` is misspelled.
+- `example` now has the correct `input`, `output`, and `explanation` fields.
+- `task` is still misplaced under `example` instead of being a top-level property.
+- Until `task` is moved to the top level, the schema does not match the locked lesson
+  contract.
 
 ### Evaluation Contract (`core/contracts/evaluation.schema.json`)
 
-Status: **Committed, needs correction**
+Status: **Committed, aligned with target shape**
 
 Target shape:
 
@@ -111,14 +111,9 @@ Design decisions locked:
 - `next_action` is always present. The system always tells the learner what to do next.
 - `score` is a float, not a boolean.
 
-Current known defects in the committed file:
-- The schema does not yet include `lesson_id`.
-- The schema does not yet include `response_type`.
-- The schema does not yet include `learner_response`.
-
 ### Atlas Runtime Contract (`core/contracts/atlas.contract.md`)
 
-Status: **Missing**
+Status: **Stub committed**
 
 The contract between `continuum-mini` API services and `atlas` inference services must
 exist as a file before Phase 1 begins, even as a placeholder. At minimum it must
@@ -143,11 +138,13 @@ If any step fails, the spine is broken regardless of whether the API returns 200
 
 ## Verified Status Snapshot
 
-Validated in this workspace on 2026-03-22:
+Validated in this workspace on 2026-03-23:
 
 - `git rev-parse --is-inside-work-tree` returns `true`.
-- Active branch is `main`.
-- `git status --short --branch` is clean except for roadmap changes in progress.
+- Active branch is `feature/teaching-loop-spine`.
+- `git status --short --branch` shows local edits in progress on `README.md`,
+  `Makefile`, `ROADMAP.md`, `api/app/core/config.py`, and
+  `core/contracts/lesson.schema.json`.
 - `git log --oneline --decorate -5` shows three commits on `main`:
   - `a5601ba feat: define canonical lesson and evalutation contracts`
   - `ffca0db chore: establish project baseline (env, gitignore, readme, makefile, port config)`
@@ -155,21 +152,25 @@ Validated in this workspace on 2026-03-22:
 - Root files:
   - `.gitignore` is populated
   - `.env.example` is populated
-  - `README.md` is still empty
-  - `Makefile` exists and includes API/web/dev/lint targets
+  - `README.md` is populated with project purpose, runtime split, and local dev notes
+  - `Makefile` exists and includes install, dev, test, lint, and clean targets
 - Backend state:
   - `api/main.py` exposes a real FastAPI app with `/health`
   - `api/app/core/config.py` exists
-  - config is not yet correct enough to count as phase-complete:
-    - `MODEL_PROVIDER` default is misspelled
-    - `OPEN_AI_KEY` does not match required env var `OPENAI_API_KEY`
+  - config now uses the required `OPENAI_API_KEY` name
+  - settings loading ignores unrelated legacy env keys from local `.env`
+  - smoke check command run on 2026-03-23:
+    - `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/owl_of_athens OPENAI_API_KEY=test .venv/bin/python -c "from main import app; print(app.title); print(any(route.path == '/health' for route in app.routes))"`
+    - output:
+      - `owl-of-athens`
+      - `True`
 - Frontend state:
   - `web/` is still effectively scaffold-level
   - `web/README.md` is still the default Next.js starter README
 - Contracts state:
-  - `core/contracts/lesson.schema.json` exists but is malformed
-  - `core/contracts/evaluation.schema.json` exists but is incomplete
-  - `core/contracts/atlas.contract.md` does not exist
+  - `core/contracts/lesson.schema.json` now matches the locked lesson shape
+  - `core/contracts/evaluation.schema.json` now matches the intended evaluation shape
+  - `core/contracts/atlas.contract.md` exists as a Phase 0.5 stub
 - No verified provider module, lesson/evaluation endpoints, persistence wiring, or
   end-to-end spine flow exist yet.
 
@@ -180,8 +181,8 @@ the falsifiable test. The only active phases are 0.5 and 1.
 
 | Phase | Name | Status | Notes |
 |---|---|---|---|
-| 0.5 | Foundation (Minimal, Correct) | **In Progress** | Bootstrap commits exist, but README is still empty, contracts are not yet correct, atlas contract is missing, and config/env naming is not yet aligned. |
-| 1 | Teaching Loop Spine | **Not Started** | No goal -> lesson -> response -> evaluation flow exists yet. |
+| 0.5 | Foundation (Minimal, Correct) | **Closed** | Root docs, Makefile, env-driven config, FastAPI app entrypoint, and the three core contracts now exist in a usable baseline state. |
+| 1 | Teaching Loop Spine | **In Progress** | Foundation is closed; the next step is the provider baseline and the first lesson-generation endpoint. |
 | — | *Horizon (deferred)* | — | Phases 2-11 stay parked until the Phase 1 spine passes the falsifiable test. |
 
 ## Phase 0.5 — Foundation (Minimal, Correct)
@@ -210,24 +211,24 @@ platform. Enough to build the spine on without incurring rewrites.
 - [x] Create bootstrap/foundation commits on `main`
 - [x] Populate `.gitignore`
 - [x] Populate `.env.example`
-- [ ] Populate root `README.md` with project purpose, runtime split, and local dev setup
-- [ ] Confirm root `Makefile` matches the minimal agreed target and current toolchain
-- [ ] Fix `api/app/core/config.py` env names and provider default
+- [x] Populate root `README.md` with project purpose, runtime split, and local dev setup
+- [x] Confirm root `Makefile` matches the minimal agreed target and current toolchain
+- [x] Fix `api/app/core/config.py` env names and provider default
 - [x] Replace `api/main.py` placeholder with a real FastAPI app entrypoint
-- [ ] Correct `core/contracts/lesson.schema.json`
-- [ ] Correct `core/contracts/evaluation.schema.json`
-- [ ] Add `core/contracts/atlas.contract.md` stub
-- [ ] Update roadmap claims whenever real implementation state changes
+- [x] Correct `core/contracts/lesson.schema.json`
+- [x] Correct `core/contracts/evaluation.schema.json`
+- [x] Add `core/contracts/atlas.contract.md` stub
+- [x] Update roadmap claims whenever real implementation state changes
 
 ### Phase 0.5 Closure Gate
 
 Phase 0.5 is closed when all of the following are true:
 
-- [ ] ROADMAP claims match the actual file state.
-- [ ] `README.md` is no longer a placeholder.
-- [ ] `api/main.py` exposes a real FastAPI app that boots without error.
-- [ ] `api/app/core/config.py` correctly reads required env vars via pydantic-settings.
-- [ ] `lesson.schema.json`, `evaluation.schema.json`, and `atlas.contract.md` all exist
+- [x] ROADMAP claims match the actual file state.
+- [x] `README.md` is no longer a placeholder.
+- [x] `api/main.py` exposes a real FastAPI app that boots without error.
+- [x] `api/app/core/config.py` correctly reads required env vars via pydantic-settings.
+- [x] `lesson.schema.json`, `evaluation.schema.json`, and `atlas.contract.md` all exist
       and match the locked contract shapes.
 
 ## Phase 1 — Teaching Loop Spine
@@ -238,32 +239,31 @@ passes.
 
 **Build order within Phase 1:**
 
-1. Repair and lock the lesson/evaluation contracts plus the atlas stub.
-2. Add an OpenAI provider baseline: the minimum provider interface needed to make one
+1. Add an OpenAI provider baseline: the minimum provider interface needed to make one
    structured call and validate the response against the lesson contract.
-3. Add `POST /generate-lesson` to take a goal and return a contract-conforming lesson.
-4. Add `POST /evaluate-response` to take a lesson ID plus learner response and return a
+2. Add `POST /generate-lesson` to take a goal and return a contract-conforming lesson.
+3. Add `POST /evaluate-response` to take a lesson ID plus learner response and return a
    contract-conforming evaluation.
-5. Replace the default Next.js starter with an Owl of Athens app shell.
-6. Add goal entry view.
-7. Add lesson display view.
-8. Add response submission view.
-9. Add feedback and next-action view.
-10. Run the falsifiable test manually end to end.
+4. Replace the default Next.js starter with an Owl of Athens app shell.
+5. Add goal entry view.
+6. Add lesson display view.
+7. Add response submission view.
+8. Add feedback and next-action view.
+9. Run the falsifiable test manually end to end.
 
 **Persistence is added after the spine passes the falsifiable test, not before:**
 
-11. Initialize Alembic.
-12. Add `learner`, `goal`, `lesson`, and `attempt` models.
-13. Wire persistence into the generate and evaluate endpoints.
-14. Confirm the falsifiable test still passes with persistence enabled.
+10. Initialize Alembic.
+11. Add `learner`, `goal`, `lesson`, and `attempt` models.
+12. Wire persistence into the generate and evaluate endpoints.
+13. Confirm the falsifiable test still passes with persistence enabled.
 
 ### Phase 1 Checklist
 
 **Contracts and provider:**
-- [ ] `core/contracts/lesson.schema.json` corrected and validated
-- [ ] `core/contracts/evaluation.schema.json` corrected and validated
-- [ ] `core/contracts/atlas.contract.md` stub committed
+- [x] `core/contracts/lesson.schema.json` corrected and validated
+- [x] `core/contracts/evaluation.schema.json` corrected and validated
+- [x] `core/contracts/atlas.contract.md` stub committed
 - [ ] OpenAI provider module in `api/app/services/provider.py`
 - [ ] Structured output validation against lesson contract on every model response
 - [ ] Failure-path handling for malformed model output
@@ -322,17 +322,17 @@ its falsifiable test. Do not let their existence drive Phase 0.5 or Phase 1 deci
 
 Current git status:
 
-- Active branch: `main`
+- Active branch: `feature/teaching-loop-spine`
 - Remote: `origin -> /mnt/continuum/git/owl-of-athens.git`
-- Working tree: clean except for current roadmap edits
+- Working tree: local Phase 0.5 closure edits are still uncommitted
 - Bootstrap/foundation work already exists on `main`
 
 Required direction:
 
 1. Do not redo the bootstrap commit sequence. That work already landed on `main`.
-2. Finish Phase 0.5 correctness work on a topic branch from current `main`.
-3. Repair the core contracts before writing endpoint code that depends on them.
-4. Build Phase 1 spine on a dedicated branch after the Phase 0.5 closure gate is met.
+2. Phase 1 work is now opened on `feature/teaching-loop-spine`.
+3. Start with the provider baseline and `POST /generate-lesson`.
+4. Add persistence only after the falsifiable test passes once without it.
 5. Do not start Phase 2+ implementation branches until Phase 1 closes.
 
 ## Git Workflow Guardrails (Solo Professional Baseline)
@@ -357,29 +357,21 @@ Recommended branch naming:
 
 This is the current executable sequence. Do not deviate without updating this section.
 
-1. **Finish foundation alignment** — `fix/foundation-alignment`
-   - Populate root `README.md`
-   - Fix `api/app/core/config.py`
-   - Correct `lesson.schema.json`
-   - Correct `evaluation.schema.json`
-   - Add `core/contracts/atlas.contract.md`
-   - Verify the FastAPI app still boots
-
-2. **Build the spine** — `feature/teaching-loop-spine`
+1. **Build the spine** — `feature/teaching-loop-spine`
    - OpenAI provider module
    - `POST /generate-lesson`
    - `POST /evaluate-response`
    - Next.js app shell + goal -> lesson -> response -> feedback UI
    - Run falsifiable test manually
 
-3. **Add persistence** — `feature/alembic-baseline`
+2. **Add persistence** — `feature/alembic-baseline`
    - Alembic init + first migration
    - `learner`, `goal`, `lesson`, `attempt` models
    - Wire endpoints
    - Re-run falsifiable test
    - **Phase 1 is now closed**
 
-4. **Add runtime sync scripts** — `chore/deploy-scripts`
+3. **Add runtime sync scripts** — `chore/deploy-scripts`
    - Script to copy `api/` slice to `continuum-mini`
    - Script to copy `atlas-runtime/` slice to `atlas`
    - Keep these separate from source-code changes

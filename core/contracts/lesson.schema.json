@@ -77,33 +77,33 @@
                 "explanation": {
                     "type": "string"
                 }
-            },
-            "task": {
-                "type": "object",
-                "required": [
-                    "prompt",
-                    "instructions",
-                    "response_type"
-                ],
-                "properties": {
-                    "prompt": {
-                        "type": "string"
-                    },
-                    "instructions": {
-                        "type": "string"
-                    },
-                    "response_type": {
-                        "type": "string",
-                        "enum": [
-                            "code",
-                            "explanation",
-                            "choice",
-                            "short_answer"
-                        ]
-                    },
-                    "expected_format": {
-                        "type": "string"
-                    }
+            }
+        },
+        "task": {
+            "type": "object",
+            "required": [
+                "prompt",
+                "instructions",
+                "response_type"
+            ],
+            "properties": {
+                "prompt": {
+                    "type": "string"
+                },
+                "instructions": {
+                    "type": "string"
+                },
+                "response_type": {
+                    "type": "string",
+                    "enum": [
+                        "code",
+                        "explanation",
+                        "choice",
+                        "short_answer"
+                    ]
+                },
+                "expected_format": {
+                    "type": "string"
                 }
             }
         }
