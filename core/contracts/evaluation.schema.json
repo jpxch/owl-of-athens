@@ -3,12 +3,25 @@
     "title": "Evaluation",
     "type": "object",
     "required": [
+        "lesson_id",
+        "response_type",
+        "learner_response",
         "score",
         "feedback",
         "correct",
         "next_action"
     ],
     "properties": {
+        "lesson_id": {
+            "type": "string"
+        },
+        "response_type": {
+            "type": "string",
+            "enum": ["code", "explanation", "choice", "short_answer"]
+        },
+        "learner_response": {
+            "type": "string"
+        },
         "score": {
             "type": "number",
             "minimum": 0,

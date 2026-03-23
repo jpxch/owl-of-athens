@@ -68,23 +68,42 @@
                 "explanation"
             ],
             "properties": {
-                "prompt": {
+                "input": {
                     "type": "string"
                 },
-                "instructions": {
+                "output": {
                     "type": "string"
                 },
-                "response_type": {
-                    "type": "string",
-                    "enum": [
-                        "code",
-                        "explanation",
-                        "choice",
-                        "short_ansert"
-                    ]
-                },
-                "expected_format": {
+                "explanation": {
                     "type": "string"
+                }
+            },
+            "task": {
+                "type": "object",
+                "required": [
+                    "prompt",
+                    "instructions",
+                    "response_type"
+                ],
+                "properties": {
+                    "prompt": {
+                        "type": "string"
+                    },
+                    "instructions": {
+                        "type": "string"
+                    },
+                    "response_type": {
+                        "type": "string",
+                        "enum": [
+                            "code",
+                            "explanation",
+                            "choice",
+                            "short_answer"
+                        ]
+                    },
+                    "expected_format": {
+                        "type": "string"
+                    }
                 }
             }
         }

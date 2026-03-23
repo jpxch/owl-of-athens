@@ -10,9 +10,9 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
 
-    MODEL_PROVIDER: str = "opneai"
+    MODEL_PROVIDER: str = "openai"
 
-    OPEN_AI_KEY: str | None = None
+    OPEN_API_KEY: str | None = None
 
     ATLAS_BASE_URL: str | None = None
     OLLAMA_BASE_URL: str | None = None
