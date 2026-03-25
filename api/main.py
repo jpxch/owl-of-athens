@@ -1,23 +1,19 @@
 from fastapi import FastAPI
-from app.core.config import settings
+
+from app.api.routes.evaluation import router as evaluation_router
+from app.api.routes.lesson import router as lesson_router
+
+app = FastAPI(
+    title="owl-of-athens",
+    docs_url="/docs",
+    redoc_url="/redoc",
+)
 
 
-def create_application() -> FastAPI:
-    app = FastAPI(
-        title=settings.APP_NAME,
-        version="0.1.0",
-        docs_url="/docs",
-        redoc_url="/redoc",
-    )
+@app.get("/health")
+def health() -> dict[str, str]:
+    return {"status": "ok"}
 
-    @app.get("/health", tags=["system"])
-    def health_check():
-        return {
-            "status": "ok",
-            "app": settings.APP_NAME,
-            "environment": settings.ENVIRONMENT,
-        }
 
-    return app
-
-app = create_application()
+app.include_router(lesson_router)
+app.include_router(evaluation_router)

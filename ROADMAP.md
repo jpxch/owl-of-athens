@@ -142,13 +142,15 @@ Validated in this workspace on 2026-03-23:
 
 - `git rev-parse --is-inside-work-tree` returns `true`.
 - Active branch is `feature/teaching-loop-spine`.
-- `git status --short --branch` shows local edits in progress on `README.md`,
-  `Makefile`, `ROADMAP.md`, `api/app/core/config.py`, and
-  `core/contracts/lesson.schema.json`.
-- `git log --oneline --decorate -5` shows three commits on `main`:
+- `git status --short --branch` shows a clean working tree on
+  `feature/teaching-loop-spine` tracking `origin/feature/teaching-loop-spine`.
+- `git log --oneline --decorate -5` shows the current spine branch head plus the
+  recent foundation baseline closeout:
+  - `069d375 feat: add provider service and API route modules for lesson and evaluation generation`
+  - `b96dc20 chore: close phase 0.5 foundation baseline`
+  - `77d9eb2 feat: add atlas contract stub`
   - `a5601ba feat: define canonical lesson and evalutation contracts`
   - `ffca0db chore: establish project baseline (env, gitignore, readme, makefile, port config)`
-  - `d1ee5ef chore: bootstrap foundation scaffold`
 - Root files:
   - `.gitignore` is populated
   - `.env.example` is populated
@@ -160,19 +162,26 @@ Validated in this workspace on 2026-03-23:
   - config now uses the required `OPENAI_API_KEY` name
   - settings loading ignores unrelated legacy env keys from local `.env`
   - smoke check command run on 2026-03-23:
-    - `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/owl_of_athens OPENAI_API_KEY=test .venv/bin/python -c "from main import app; print(app.title); print(any(route.path == '/health' for route in app.routes))"`
+    - `DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:5432/owl_of_athens OPENAI_API_KEY=test uv run python -c "from main import app; print(app.title); print(any(route.path == '/health' for route in app.routes))"`
     - output:
       - `owl-of-athens`
       - `True`
+  - `api/app/services/provider.py` now exists, but it is not yet a verified baseline:
+    - it contains settings attribute typos and a schema filename typo
+    - it references an evaluation prompt builder that does not exist
+    - it is not wired into any API route yet
+  - `api/app/api/routes/lesson.py` exists but is still empty
+  - `api/app/api/routes/evaluation.py` exists but is still empty
 - Frontend state:
-  - `web/` is still effectively scaffold-level
+  - `web/src/app/page.tsx` is still the default Next.js starter page
+  - `web/src/app/layout.tsx` still uses default metadata
   - `web/README.md` is still the default Next.js starter README
 - Contracts state:
   - `core/contracts/lesson.schema.json` now matches the locked lesson shape
   - `core/contracts/evaluation.schema.json` now matches the intended evaluation shape
   - `core/contracts/atlas.contract.md` exists as a Phase 0.5 stub
-- No verified provider module, lesson/evaluation endpoints, persistence wiring, or
-  end-to-end spine flow exist yet.
+- No verified lesson/evaluation endpoints, persistence wiring, or end-to-end spine
+  flow exist yet.
 
 ## Reality-Checked Phase Status
 
@@ -182,7 +191,7 @@ the falsifiable test. The only active phases are 0.5 and 1.
 | Phase | Name | Status | Notes |
 |---|---|---|---|
 | 0.5 | Foundation (Minimal, Correct) | **Closed** | Root docs, Makefile, env-driven config, FastAPI app entrypoint, and the three core contracts now exist in a usable baseline state. |
-| 1 | Teaching Loop Spine | **In Progress** | Foundation is closed; the next step is the provider baseline and the first lesson-generation endpoint. |
+| 1 | Teaching Loop Spine | **In Progress** | The branch now contains an initial provider scaffold and route-module placeholders, but the provider is not yet runnable and the teaching-loop endpoints are not implemented. |
 | — | *Horizon (deferred)* | — | Phases 2-11 stay parked until the Phase 1 spine passes the falsifiable test. |
 
 ## Phase 0.5 — Foundation (Minimal, Correct)
@@ -239,24 +248,27 @@ passes.
 
 **Build order within Phase 1:**
 
-1. Add an OpenAI provider baseline: the minimum provider interface needed to make one
-   structured call and validate the response against the lesson contract.
+1. Repair the OpenAI provider baseline so it can initialize from env, build both
+   prompts, make one structured call, and validate outputs against the lesson and
+   evaluation contracts.
 2. Add `POST /generate-lesson` to take a goal and return a contract-conforming lesson.
-3. Add `POST /evaluate-response` to take a lesson ID plus learner response and return a
-   contract-conforming evaluation.
-4. Replace the default Next.js starter with an Owl of Athens app shell.
-5. Add goal entry view.
-6. Add lesson display view.
-7. Add response submission view.
-8. Add feedback and next-action view.
-9. Run the falsifiable test manually end to end.
+3. Add `POST /evaluate-response` to take a lesson payload plus learner response and
+   return a contract-conforming evaluation.
+4. Mount the lesson and evaluation routers in `api/main.py` and verify both endpoints
+   boot locally.
+5. Replace the default Next.js starter with an Owl of Athens app shell.
+6. Add goal entry view.
+7. Add lesson display view.
+8. Add response submission view.
+9. Add feedback and next-action view.
+10. Run the falsifiable test manually end to end.
 
 **Persistence is added after the spine passes the falsifiable test, not before:**
 
-10. Initialize Alembic.
-11. Add `learner`, `goal`, `lesson`, and `attempt` models.
-12. Wire persistence into the generate and evaluate endpoints.
-13. Confirm the falsifiable test still passes with persistence enabled.
+11. Initialize Alembic.
+12. Add `learner`, `goal`, `lesson`, and `attempt` models.
+13. Wire persistence into the generate and evaluate endpoints.
+14. Confirm the falsifiable test still passes with persistence enabled.
 
 ### Phase 1 Checklist
 
@@ -264,11 +276,13 @@ passes.
 - [x] `core/contracts/lesson.schema.json` corrected and validated
 - [x] `core/contracts/evaluation.schema.json` corrected and validated
 - [x] `core/contracts/atlas.contract.md` stub committed
-- [ ] OpenAI provider module in `api/app/services/provider.py`
+- [x] OpenAI provider module scaffold added in `api/app/services/provider.py`
+- [ ] Provider scaffold corrected so it initializes and can complete one lesson/evaluation round trip
 - [ ] Structured output validation against lesson contract on every model response
 - [ ] Failure-path handling for malformed model output
 
 **API:**
+- [ ] Lesson and evaluation routers mounted in `api/main.py`
 - [ ] `POST /generate-lesson` implemented
 - [ ] `POST /evaluate-response` implemented
 - [ ] Both endpoints boot and return contract-conforming responses locally
@@ -324,16 +338,18 @@ Current git status:
 
 - Active branch: `feature/teaching-loop-spine`
 - Remote: `origin -> /mnt/continuum/git/owl-of-athens.git`
-- Working tree: local Phase 0.5 closure edits are still uncommitted
-- Bootstrap/foundation work already exists on `main`
+- Working tree: clean
+- Latest spine commit: `069d375 feat: add provider service and API route modules for lesson and evaluation generation`
+- Foundation closeout already exists on `main` via `b96dc20 chore: close phase 0.5 foundation baseline`
 
 Required direction:
 
 1. Do not redo the bootstrap commit sequence. That work already landed on `main`.
 2. Phase 1 work is now opened on `feature/teaching-loop-spine`.
-3. Start with the provider baseline and `POST /generate-lesson`.
-4. Add persistence only after the falsifiable test passes once without it.
-5. Do not start Phase 2+ implementation branches until Phase 1 closes.
+3. Treat the existing provider module as a scaffold, not a completed milestone.
+4. Repair and wire the provider before moving to UI work.
+5. Add persistence only after the falsifiable test passes once without it.
+6. Do not start Phase 2+ implementation branches until Phase 1 closes.
 
 ## Git Workflow Guardrails (Solo Professional Baseline)
 
@@ -358,9 +374,10 @@ Recommended branch naming:
 This is the current executable sequence. Do not deviate without updating this section.
 
 1. **Build the spine** — `feature/teaching-loop-spine`
-   - OpenAI provider module
-   - `POST /generate-lesson`
-   - `POST /evaluate-response`
+   - Repair `api/app/services/provider.py`
+   - Implement and mount `POST /generate-lesson`
+   - Implement and mount `POST /evaluate-response`
+   - Verify contract validation and malformed-output failure handling
    - Next.js app shell + goal -> lesson -> response -> feedback UI
    - Run falsifiable test manually
 
