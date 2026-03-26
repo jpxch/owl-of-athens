@@ -9,7 +9,8 @@
         "score",
         "feedback",
         "correct",
-        "next_action"
+        "next_action",
+        "misconception"
     ],
     "properties": {
         "lesson_id": {

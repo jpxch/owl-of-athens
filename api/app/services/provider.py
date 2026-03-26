@@ -96,6 +96,14 @@ class OpenAIContractProvider:
         )
         content = self._call_model(prompt=prompt)
         payload = self._parse_json(content=content)
+
+        payload["lesson_id"] = lesson_payload["lesson_id"]
+        payload["response_type"] = lesson_payload["task"]["response_type"]
+        payload["learner_response"] = learner_response
+
+        if "misconception" not in payload:
+            payload["misconception"] = None
+
         self._validate_schema(
             payload=payload,
             schema=self._evaluation_schema,
@@ -224,7 +232,18 @@ class OpenAIContractProvider:
         """
         Build the prompt for evaluation generation.
         """
-        evaluation_schema_json = json.dumps(self._evaluation_schema, indent=2)
+        evaluation_schema = dict(self._evaluation_schema)
+
+        for field in ["lesson_id", "response_type", "learner_response"]:
+            evaluation_schema["properties"].pop(field, None)
+
+        if "required" in evaluation_schema:
+            evaluation_schema["required"] = [
+                f for f in evaluation_schema["required"]
+                if f not in ["lesson_id", "response_type", "learner_response"]
+            ]
+            
+        evaluation_schema_json = json.dumps(evaluation_schema, indent=2)
         lesson_payload_json = json.dumps(lesson_payload, indent=2)
 
         return (

@@ -84,7 +84,8 @@
             "required": [
                 "prompt",
                 "instructions",
-                "response_type"
+                "response_type",
+                "expected_format"
             ],
             "properties": {
                 "prompt": {
