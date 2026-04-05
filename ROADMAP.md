@@ -1,6 +1,6 @@
 # Owl of Athens Roadmap
 
-Last updated: 2026-03-25
+Last updated: 2026-03-30
 
 ## Purpose (Grounding Contract)
 
@@ -43,7 +43,7 @@ contract wins until the contract is explicitly updated.
 
 ### Lesson Contract (`core/contracts/lesson.schema.json`)
 
-Status: **Committed, mostly aligned, still needs one schema tightening pass**
+Status: **Committed, partially hardened, still needs identifier and verification tightening**
 
 Target shape:
 
@@ -81,14 +81,14 @@ Design decisions locked:
 - `scope` is required. A lesson that does not declare its boundaries will over-generate.
 
 Current known contract gaps in the committed file:
-- `task` is correctly top-level now.
-- `task.expected_format` exists, but it is not currently marked required in the JSON
-  schema even though the locked contract treats it as required.
-- `lesson_id` is currently validated as a string, not as a UUID-shaped string.
+- `task` is correctly top-level.
+- `task.expected_format` is now required in both the JSON schema and the Pydantic
+  lesson model.
+- `lesson_id` is still validated as a string, not as a UUID-shaped string.
 
 ### Evaluation Contract (`core/contracts/evaluation.schema.json`)
 
-Status: **Committed, close to target shape, still needs one required-field correction**
+Status: **Committed, mostly aligned, still needs identifier tightening and live verification**
 
 Target shape:
 
@@ -111,9 +111,10 @@ Design decisions locked:
 - `next_action` is always present. The system always tells the learner what to do next.
 - `score` is a float, not a boolean.
 
-Current known contract gap in the committed file:
-- `misconception` exists in the schema, but it is not currently listed in `required`,
-  so the committed schema is still looser than the locked contract.
+Current known contract notes:
+- `misconception` is now required and nullable in the schema, matching the locked
+  contract.
+- `lesson_id` is still validated as a plain string, not as a UUID-shaped string.
 
 ### Atlas Runtime Contract (`core/contracts/atlas.contract.md`)
 
@@ -142,22 +143,23 @@ If any step fails, the spine is broken regardless of whether the API returns 200
 
 ## Verified Status Snapshot
 
-Validated in this workspace on 2026-03-25 by direct repository inspection:
+Validated in this workspace on 2026-03-30 by direct repository inspection:
 
 - `git rev-parse --is-inside-work-tree` returns `true`.
 - Active branch is `feature/teaching-loop-spine`.
 - `git status --short --branch` shows a clean working tree on
   `feature/teaching-loop-spine` tracking `origin/feature/teaching-loop-spine`.
-- `git log --oneline --decorate -5` shows the current spine branch head plus the
+- `git log --oneline --decorate -6` shows the current spine branch head plus the
   recent foundation baseline closeout:
+  - `3e3738d feat: update evaluation and lesson schemas to enforce required fields and improve payload handling`
   - `218c8b3 feat: implement lesson generation and evaluation endpoints with Pydantic models`
   - `069d375 feat: add provider service and API route modules for lesson and evaluation generation`
   - `b96dc20 chore: close phase 0.5 foundation baseline`
   - `77d9eb2 feat: add atlas contract stub`
   - `a5601ba feat: define canonical lesson and evalutation contracts`
-  - `ffca0db chore: establish project baseline (env, gitignore, readme, makefile, port config)`
 - Root files:
   - `.gitignore` is populated
+  - `.mise.toml` exists with the pinned toolchain baseline
   - `.env.example` is populated
   - `README.md` is populated with project purpose, runtime split, and local dev notes
   - `Makefile` exists and includes install, dev, test, lint, and clean targets
@@ -173,12 +175,16 @@ Validated in this workspace on 2026-03-25 by direct repository inspection:
     - it parses raw JSON model output fail-fast
     - it validates lesson and evaluation payloads with `jsonschema`
     - it generates `lesson_id` server-side before final lesson validation
+    - it backfills missing `misconception` to `null` before final evaluation validation
   - `api/app/api/models/requests.py` defines request bodies for both lesson generation
     and evaluation
   - `api/app/api/models/lesson.py` defines the nested lesson payload shape used by the
     evaluation request path
   - `api/app/api/routes/lesson.py` implements `POST /generate-lesson`
   - `api/app/api/routes/evaluation.py` implements `POST /evaluate-response`
+  - `api/tests/` exists, but no test files are checked in yet
+  - `api/pyproject.toml` includes `pytest`, `sqlalchemy`, `psycopg`, and `alembic`,
+    but no persistence models or migrations are implemented yet
   - Current backend gaps still blocking a "proven spine" claim:
     - no recorded live provider smoke test or end-to-end manual verification is present
     - provider model selection is still hardcoded to `gpt-4.1` instead of being fully
@@ -187,15 +193,19 @@ Validated in this workspace on 2026-03-25 by direct repository inspection:
       4xx API errors yet
     - no automated tests currently verify the route/provider contract path
 - Frontend state:
+  - `web/package.json` is wired for Next 16 / React 19 / Tailwind 4
   - `web/src/app/page.tsx` is still the default Next.js starter page
   - `web/src/app/layout.tsx` still uses default metadata
   - `web/README.md` is still the default Next.js starter README
 - Contracts state:
-  - `core/contracts/lesson.schema.json` is structurally close to the locked lesson
-    shape, but `task.expected_format` is still optional in the schema
-  - `core/contracts/evaluation.schema.json` is structurally close to the intended
-    evaluation shape, but `misconception` is still optional in the schema
+  - `core/contracts/lesson.schema.json` now requires `task.expected_format`
+  - `core/contracts/evaluation.schema.json` now requires `misconception` while keeping
+    it nullable
+  - both schemas still accept `lesson_id` as a generic string rather than a UUID-shaped
+    string
   - `core/contracts/atlas.contract.md` exists as a Phase 0.5 stub
+  - `atlas-runtime/`, `docs/`, `infra/`, `scripts/`, `core/prompts/`, and
+    `core/seeds/` exist as scaffolding directories but still have no checked-in files
 - No verified lesson/evaluation endpoints, persistence wiring, or end-to-end spine
   flow exist yet.
 
@@ -207,7 +217,7 @@ the falsifiable test. The only active phases are 0.5 and 1.
 | Phase | Name | Status | Notes |
 |---|---|---|---|
 | 0.5 | Foundation (Minimal, Correct) | **Closed** | Root docs, Makefile, env-driven config, FastAPI app entrypoint, and the three core contracts now exist in a usable baseline state. |
-| 1 | Teaching Loop Spine | **In Progress** | The backend spine is partially implemented: provider, request models, and both API endpoints exist, but contract alignment, live verification, and the learner UI are still incomplete. |
+| 1 | Teaching Loop Spine | **In Progress** | The backend spine exists and the required-field contract tightening has started, but UUID enforcement, provider hardening, live verification, tests, and the learner UI are still incomplete. |
 | — | *Horizon (deferred)* | — | Phases 2-11 stay parked until the Phase 1 spine passes the falsifiable test. |
 
 ## Phase 0.5 — Foundation (Minimal, Correct)
@@ -264,9 +274,8 @@ passes.
 
 **Build order within Phase 1:**
 
-1. Tighten the current contracts and provider path so the committed lesson/evaluation
-   schemas, Pydantic models, and route behavior agree on required fields and error
-   handling.
+1. Finish the remaining backend hardening so the committed schemas, Pydantic models,
+   provider behavior, and route errors are aligned.
 2. Verify the current OpenAI provider path with a real local boot and at least one
    live lesson/evaluation round trip.
 3. Replace the default Next.js starter with an Owl of Athens app shell.
@@ -292,9 +301,12 @@ passes.
 - [x] OpenAI provider module implemented in `api/app/services/provider.py`
 - [x] Structured output validation against lesson contract on every model response
 - [x] Failure-path handling for malformed model output
-- [ ] Contract tightening pass completed (`expected_format`, `misconception`, UUID shape, route/model consistency)
+- [x] Required-field tightening landed for `task.expected_format` and `misconception`
+- [ ] UUID shape enforced for `lesson_id` across contracts and models
+- [ ] Provider/request validation failures normalized into predictable API errors
 - [ ] Provider fully env-driven, including model selection
 - [ ] Provider path manually verified with one real lesson/evaluation round trip
+- [ ] Automated tests cover the route/provider contract path
 
 **API:**
 - [x] Lesson and evaluation routers mounted in `api/main.py`
@@ -355,7 +367,7 @@ Current git status:
 - Active branch: `feature/teaching-loop-spine`
 - Remote: `origin -> /mnt/continuum/git/owl-of-athens.git`
 - Working tree: clean
-- Latest spine commit: `218c8b3 feat: implement lesson generation and evaluation endpoints with Pydantic models`
+- Latest spine commit: `3e3738d feat: update evaluation and lesson schemas to enforce required fields and improve payload handling`
 - Foundation closeout already exists on `main` via `b96dc20 chore: close phase 0.5 foundation baseline`
 
 Required direction:
@@ -364,13 +376,13 @@ Required direction:
 2. Phase 1 work is now opened on `feature/teaching-loop-spine`.
 3. Treat the current backend as **implemented but not yet proven**. The provider and
    routes are real, but they still need alignment and verification.
-4. Finish the backend tightening pass before moving significant effort into UI:
-   - make `task.expected_format` consistently required where the contract says it is
-   - make `misconception` consistently present-and-nullable where the contract says it
-     is
+4. Finish the remaining backend hardening before moving significant effort into UI:
+   - enforce UUID-shaped `lesson_id` where the contracts and models expect an
+     identifier
    - move provider model selection into settings/env
    - normalize request/provider validation failures into predictable API responses
-5. After the backend tightening pass, record a real local verification run and only
+   - add a first route/provider smoke test under `api/tests/`
+5. After backend hardening, record a real local verification run and only
    then move into the minimal learner UI.
 6. Add persistence only after the falsifiable test passes once without it.
 7. Do not start Phase 2+ implementation branches until Phase 1 closes.
@@ -398,8 +410,9 @@ Recommended branch naming:
 This is the current executable sequence. Do not deviate without updating this section.
 
 1. **Build the spine** — `feature/teaching-loop-spine`
-   - Tighten contract/schema/model consistency
+   - Finish identifier + error-handling consistency
    - Finish provider env-driven configuration
+   - Add first API smoke tests
    - Verify contract validation and malformed-output failure handling with a real run
    - Next.js app shell + goal -> lesson -> response -> feedback UI
    - Run falsifiable test manually
