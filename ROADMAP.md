@@ -57,7 +57,6 @@ Validated from the repo and current working tree on 2026-04-06 unless otherwise 
   - `uv run pytest` in `api/` could not complete in this sandbox because `uv` could not create its cache/lock temp files on the read-only cache path
   - `pnpm lint` in `web/` could not complete in this environment because `eslint` failed to load `libatomic.so.1`
 - Remaining visible gaps:
-  - `lesson_id` is still a plain string in contracts/models rather than a UUID-shaped identifier
   - provider model selection is hardcoded instead of fully env-driven
   - empty-input/provider validation paths are not normalized into clear 4xx API errors
   - route/provider contract tests do not exist yet
@@ -116,7 +115,7 @@ Required direction:
 | 1 | Core Platform | In Progress | The teaching loop spine exists, but backend hardening, route/provider tests, and live verification are still missing. |
 | 2 | Main Product Surface | In Progress | A minimal learner page exists, but it still uses a hardcoded API base URL and default app metadata/docs remain. |
 | 3 | Stabilization | Not Started | No serious route/provider coverage or end-to-end verification baseline yet. |
-| 4 | Consumer Contracts | In Progress | Lesson/evaluation schemas and request models exist, but `lesson_id` typing still needs tightening. |
+| 4 | Consumer Contracts | In Progress | Lesson/evaluation schemas and request models exist with UUID-shaped `lesson_id` enforcement, but broader route/provider contract coverage is still missing. |
 | 5 | Persistence Layer | Not Started | Dependencies are present, but no models, migrations, or DB wiring exist. |
 | 6 | Atlas / Provider Expansion | Not Started | `atlas.contract.md` is a stub and the provider path is OpenAI-only today. |
 | 7 | Automation / Lifecycle | Not Started | No deployment/sync scripts or branch/release automation checked in. |
@@ -129,7 +128,7 @@ Required direction:
 ### Suggested Immediate Next Step
 
 - [x] Refresh the roadmap against the actual repo state
-- [ ] Enforce UUID-shaped `lesson_id` across contracts and models
+- [x] Enforce UUID-shaped `lesson_id` across contracts and models
 - [ ] Move provider model selection into settings/env
 - [ ] Normalize invalid input and provider validation failures into predictable API errors
 - [ ] Add focused route/provider tests
@@ -137,8 +136,8 @@ Required direction:
 
 ### Phase 1 Kickoff (Teaching Loop Spine Hardening)
 
-- [ ] Tighten `lesson.schema.json` and `evaluation.schema.json` identifier validation
-- [ ] Align Pydantic lesson/request models with the tighter contract
+- [x] Tighten `lesson.schema.json` and `evaluation.schema.json` identifier validation
+- [x] Align Pydantic lesson/request models with the tighter contract
 - [ ] Replace hardcoded provider model selection with config-driven selection
 - [ ] Add route/provider tests beyond `api/tests/test_health.py`
 

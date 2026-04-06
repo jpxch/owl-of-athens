@@ -25,7 +25,7 @@ def evaluate_response(req: EvaluateRequest) -> dict:
     try:
         provider = OpenAIContractProvider()
         evaluation = provider.evaluate_response(
-            lesson_payload=req.lesson.model_dump(),
+            lesson_payload=req.lesson.model_dump(mode="json"),
             learner_response=req.learner_response,
         )
     except ProviderConfigurationError as exc:

@@ -43,7 +43,7 @@ POST /v1/lesson/evaluate
 ### Request
 
 {
-  "lesson_id": "string",
+  "lesson_id": "uuid string",
   "response_type": "code | explanation | choice | short_answer",
   "learner_response": "string"
 }

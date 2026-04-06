@@ -1,5 +1,7 @@
-from pydantic import BaseModel
 from typing import List
+from uuid import UUID
+
+from pydantic import BaseModel
 
 
 class Scope(BaseModel):
@@ -22,7 +24,7 @@ class Task(BaseModel):
     expected_format: str
 
 class LessonPayload(BaseModel):
-    lesson_id: str
+    lesson_id: UUID
     goal: str
     title: str
     scope: Scope
