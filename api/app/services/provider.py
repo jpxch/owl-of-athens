@@ -46,7 +46,13 @@ class OpenAIContractProvider:
                 "OPENAI_API_KEY is required when MODEL_PROVIDER='openai'."
             )
 
+        if not settings.OPENAI_MODEL or not settings.OPENAI_MODEL.strip():
+            raise ProviderConfigurationError(
+                "OPENAI_MODEL is required when MODEL_PROVIDER='openai'."
+            )
+
         self._client = OpenAI(api_key=settings.OPENAI_API_KEY)
+        self._model = settings.OPENAI_MODEL.strip()
         self._lesson_schema = self._load_schema("lesson.schema.json")
         self._evaluation_schema = self._load_schema("evaluation.schema.json")
         self._lesson_prompt_schema = self._build_lesson_prompt_schema()
@@ -122,7 +128,7 @@ class OpenAIContractProvider:
         """
         try:
             response = self._client.responses.create(
-                model="gpt-4.1",
+                model=self._model,
                 input=prompt,
             )
         except Exception as exc:

@@ -1,6 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
+
 class Settings(BaseSettings):
     APP_NAME: str = "owl-of-athens"
     ENVIRONMENT: str = "development"
@@ -13,6 +14,7 @@ class Settings(BaseSettings):
     MODEL_PROVIDER: str = "openai"
 
     OPENAI_API_KEY: str | None = None
+    OPENAI_MODEL: str = "gpt-4.1"
 
     ATLAS_BASE_URL: str | None = None
     OLLAMA_BASE_URL: str | None = None

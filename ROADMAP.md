@@ -57,7 +57,6 @@ Validated from the repo and current working tree on 2026-04-06 unless otherwise 
   - `uv run pytest` in `api/` could not complete in this sandbox because `uv` could not create its cache/lock temp files on the read-only cache path
   - `pnpm lint` in `web/` could not complete in this environment because `eslint` failed to load `libatomic.so.1`
 - Remaining visible gaps:
-  - provider model selection is hardcoded instead of fully env-driven
   - empty-input/provider validation paths are not normalized into clear 4xx API errors
   - route/provider contract tests do not exist yet
   - frontend API base URL is hardcoded in the page
@@ -129,7 +128,7 @@ Required direction:
 
 - [x] Refresh the roadmap against the actual repo state
 - [x] Enforce UUID-shaped `lesson_id` across contracts and models
-- [ ] Move provider model selection into settings/env
+- [x] Move provider model selection into settings/env
 - [ ] Normalize invalid input and provider validation failures into predictable API errors
 - [ ] Add focused route/provider tests
 - [ ] Record a real local lesson/evaluation verification run
@@ -138,7 +137,7 @@ Required direction:
 
 - [x] Tighten `lesson.schema.json` and `evaluation.schema.json` identifier validation
 - [x] Align Pydantic lesson/request models with the tighter contract
-- [ ] Replace hardcoded provider model selection with config-driven selection
+- [x] Replace hardcoded provider model selection with config-driven selection
 - [ ] Add route/provider tests beyond `api/tests/test_health.py`
 
 ### Phase 2 Closure (Minimal Learner Surface)
