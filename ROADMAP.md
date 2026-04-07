@@ -25,17 +25,17 @@ This file is the source-of-truth context for ongoing work on this project.
 
 Validated from the repo and current working tree on 2026-04-06 unless otherwise noted:
 
-- `git status --short` is dirty:
-  - `ROADMAP.md` modified as part of this refresh
-  - `.codex` untracked
+- `git status --short` is dirty because the current work-in-progress includes backend error handling, route tests, frontend polish, and docs updates.
 - Active branch is `feature/teaching-loop-spine`.
 - `git log -1 --oneline` reports `5e0e05e` (`feat: enhance lesson generation UI and add evaluation feedback components`).
 - `.env.example` exists and the repo expects:
   - `DATABASE_URL`
   - `MODEL_PROVIDER`
   - `OPENAI_API_KEY`
+  - `OPENAI_MODEL`
   - `ATLAS_BASE_URL`
   - `OLLAMA_BASE_URL`
+  - `NEXT_PUBLIC_API_BASE_URL`
 - Core backend entrypoints exist and are currently wired through:
   - `api/main.py`
   - `api/app/api/routes/lesson.py`
@@ -45,21 +45,21 @@ Validated from the repo and current working tree on 2026-04-06 unless otherwise 
   - schema-backed OpenAI generation/evaluation in `api/app/services/provider.py`
 - The repo currently includes tests for:
   - `api/tests/test_health.py`
+  - `api/tests/test_routes.py`
+  - `api/tests/test_provider.py`
 - Current docs status:
   - `README.md` describes the project, core loop, architecture, and local dev entrypoints
-  - `web/README.md` is still the default Next.js starter README
-  - `api/README.md` is empty
+  - `web/README.md` describes the learner UI, local web dev flow, and frontend env config
+  - `api/README.md` documents routes, responsibilities, env configuration, and backend test entrypoints
 - Current runtime verification:
   - `api/main.py` exposes `GET /health`
   - the API mounts `POST /generate-lesson` and `POST /evaluate-response`
-  - `web/src/app/page.tsx` implements a basic goal -> lesson -> response -> feedback flow
+  - `web/src/app/page.tsx` implements a styled goal -> lesson -> response -> feedback flow
 - Current local verification:
   - `uv run pytest` in `api/` could not complete in this sandbox because `uv` could not create its cache/lock temp files on the read-only cache path
   - `pnpm lint` in `web/` could not complete in this environment because `eslint` failed to load `libatomic.so.1`
+  - `pnpm exec tsc --noEmit` in `web/` could not complete in this environment because `node` failed to load `libatomic.so.1`
 - Remaining visible gaps:
-  - empty-input/provider validation paths are not normalized into clear 4xx API errors
-  - route/provider contract tests do not exist yet
-  - frontend API base URL is hardcoded in the page
   - no recorded live end-to-end lesson/evaluation verification exists yet
   - no persistence models or migrations are implemented yet
 
@@ -89,14 +89,14 @@ Implemented core services / modules:
   - `web/src/app/layout.tsx`
 
 Current system direction:
-The minimal teaching loop skeleton is now real in both the API and the web app. The immediate gap is not basic scaffolding anymore, but proving the spine: tighten the contracts and error paths, remove the remaining hardcoded config, add route/provider tests, and complete one real end-to-end lesson/evaluation run before moving into persistence or broader product work.
+The minimal teaching loop skeleton is now real in both the API and the web app. The immediate gap is not scaffolding anymore, but proving the spine end-to-end: keep the contracts and error paths tight, verify one real lesson/evaluation run in a working local environment, and only then move into persistence or broader product work.
 
 ## Git Status And Direction
 
 Current git status:
 
 - Active branch: `feature/teaching-loop-spine`
-- Working tree: dirty because this roadmap refresh is in progress and `.codex` is untracked
+- Working tree: dirty because the current work-in-progress includes backend hardening, frontend polish, and docs updates
 - Latest commit before this roadmap refresh: `5e0e05e` (`feat: enhance lesson generation UI and add evaluation feedback components`)
 
 Required direction:
@@ -111,14 +111,14 @@ Required direction:
 | Phase | Name | Status | Notes |
 |---|---|---|---|
 | 0 | Foundation | Complete | FastAPI, Next.js, contracts, config, Makefile, and root docs exist in usable baseline form. |
-| 1 | Core Platform | In Progress | The teaching loop spine exists, but backend hardening, route/provider tests, and live verification are still missing. |
-| 2 | Main Product Surface | In Progress | A minimal learner page exists, but it still uses a hardcoded API base URL and default app metadata/docs remain. |
-| 3 | Stabilization | Not Started | No serious route/provider coverage or end-to-end verification baseline yet. |
-| 4 | Consumer Contracts | In Progress | Lesson/evaluation schemas and request models exist with UUID-shaped `lesson_id` enforcement, but broader route/provider contract coverage is still missing. |
+| 1 | Core Platform | In Progress | The teaching loop spine exists with normalized request errors and route coverage, but live verification is still missing. |
+| 2 | Main Product Surface | In Progress | The learner page now uses env-driven API config and product-specific metadata/docs, but it still needs real local runtime verification. |
+| 3 | Stabilization | In Progress | Malformed provider output paths now have route/provider coverage, but live end-to-end verification is still missing. |
+| 4 | Consumer Contracts | In Progress | Lesson/evaluation schemas and request models exist with UUID-shaped `lesson_id` enforcement, and malformed model-output handling is now covered in tests. |
 | 5 | Persistence Layer | Not Started | Dependencies are present, but no models, migrations, or DB wiring exist. |
 | 6 | Atlas / Provider Expansion | Not Started | `atlas.contract.md` is a stub and the provider path is OpenAI-only today. |
 | 7 | Automation / Lifecycle | Not Started | No deployment/sync scripts or branch/release automation checked in. |
-| 8 | Testing & Data Quality | Not Started | Only a health smoke test exists. |
+| 8 | Testing & Data Quality | In Progress | Health and route tests exist, but they still need execution in a working local test environment. |
 | 9 | Hardening & Operations | Not Started | No observability, deployment verification, or operational playbooks yet. |
 | 10 | Future / Advanced Work | Not Started | Adaptive learning, multi-user state, and curriculum depth remain intentionally deferred. |
 
@@ -129,8 +129,8 @@ Required direction:
 - [x] Refresh the roadmap against the actual repo state
 - [x] Enforce UUID-shaped `lesson_id` across contracts and models
 - [x] Move provider model selection into settings/env
-- [ ] Normalize invalid input and provider validation failures into predictable API errors
-- [ ] Add focused route/provider tests
+- [x] Normalize invalid input and provider validation failures into predictable API errors
+- [x] Add focused route/provider tests
 - [ ] Record a real local lesson/evaluation verification run
 
 ### Phase 1 Kickoff (Teaching Loop Spine Hardening)
@@ -138,20 +138,20 @@ Required direction:
 - [x] Tighten `lesson.schema.json` and `evaluation.schema.json` identifier validation
 - [x] Align Pydantic lesson/request models with the tighter contract
 - [x] Replace hardcoded provider model selection with config-driven selection
-- [ ] Add route/provider tests beyond `api/tests/test_health.py`
+- [x] Add route/provider tests beyond `api/tests/test_health.py`
 
 ### Phase 2 Closure (Minimal Learner Surface)
 
 - [x] Replace the default Next.js starter page with a learner flow
 - [x] Support goal entry, lesson display, response submission, and feedback display
-- [ ] Move the frontend API base URL out of `web/src/app/page.tsx`
-- [ ] Replace default app metadata and starter README content with project-specific docs
+- [x] Move the frontend API base URL out of `web/src/app/page.tsx`
+- [x] Replace default app metadata and starter README content with project-specific docs
 
 ### Phase 3 Stabilization (Spine Proof)
 
 - [ ] Run one real end-to-end goal -> lesson -> response -> evaluation flow
-- [ ] Verify malformed model output fails safely and visibly
-- [ ] Verify empty/invalid request paths return clear client-facing errors
+- [x] Verify malformed model output fails safely and visibly
+- [x] Verify empty/invalid request paths return clear client-facing errors
 - [ ] Re-run backend/frontend verification in a working local environment
 
 ### Phase 4 Kickoff (Persistence)
@@ -164,6 +164,7 @@ Required direction:
 ### Phase N Gate (Pre-Expansion)
 
 - [ ] Testing baseline covers health, lesson generation, and evaluation paths
+- [x] Testing baseline covers health, lesson generation, and evaluation paths in checked-in test files
 - [ ] Contracts, models, and provider behavior stay aligned
 - [ ] Docs reflect the real local dev workflow for both `api/` and `web/`
 - [ ] Runtime verification is recorded before starting adaptive/multi-user work

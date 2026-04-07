@@ -1,5 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
+from app.api.errors import api_error_response
 from app.api.models.requests import EvaluateRequest
 from app.services.provider import (
     OpenAIContractProvider,
@@ -12,7 +14,7 @@ router = APIRouter(prefix="", tags=["evaluation"])
 
 
 @router.post("/evaluate-response")
-def evaluate_response(req: EvaluateRequest) -> dict:
+def evaluate_response(req: EvaluateRequest) -> dict | JSONResponse:
     """
     Temporary Phase 1 route.
 
@@ -28,11 +30,37 @@ def evaluate_response(req: EvaluateRequest) -> dict:
             lesson_payload=req.lesson.model_dump(mode="json"),
             learner_response=req.learner_response,
         )
+    except ValueError as exc:
+        return api_error_response(
+            status_code=400,
+            message=str(exc),
+            error_type="invalid_input",
+            source="request",
+            retryable=False,
+        )
     except ProviderConfigurationError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        return api_error_response(
+            status_code=500,
+            message=str(exc),
+            error_type="provider_configuration_error",
+            source="provider",
+            retryable=False,
+        )
     except ProviderResponseError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        return api_error_response(
+            status_code=502,
+            message=str(exc),
+            error_type="provider_response_error",
+            source="provider",
+            retryable=True,
+        )
     except ProviderSchemaError as exc:
-        raise HTTPException(status_code=502, detail=str(exc)) from exc
+        return api_error_response(
+            status_code=502,
+            message=str(exc),
+            error_type="provider_schema_error",
+            source="provider",
+            retryable=True,
+        )
 
     return evaluation
