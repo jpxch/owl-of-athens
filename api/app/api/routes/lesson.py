@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
 from app.api.errors import api_error_response
 from app.api.models.requests import GenerateLessonRequest
@@ -13,8 +12,8 @@ from app.services.provider import (
 router = APIRouter(prefix="", tags=["lesson"])
 
 
-@router.post("/generate-lesson")
-def generate_lesson(req: GenerateLessonRequest) -> dict | JSONResponse:
+@router.post("/generate-lesson", response_model=None)
+def generate_lesson(req: GenerateLessonRequest):
     """
     Temporary Phase 1 route.
 

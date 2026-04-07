@@ -26,7 +26,7 @@ class ProviderSchemaError(ProviderError):
 
 class OpenAIContractProvider:
     """
-    Fail-fast provider for structured lesson/evalutaion generation.
+    Fail-fast provider for structured lesson/evaluation generation.
 
     Design rules:
     - The model is treated as untrusted input.
@@ -38,7 +38,7 @@ class OpenAIContractProvider:
     def __init__(self) -> None:
         if settings.MODEL_PROVIDER.lower() != "openai":
             raise ProviderConfigurationError(
-                "MODEL_PROVIDER must be set to 'openai' for OpenAICtractProvider."
+                "MODEL_PROVIDER must be set to 'openai' for OpenAIContractProvider."
             )
 
         if not settings.OPENAI_API_KEY:

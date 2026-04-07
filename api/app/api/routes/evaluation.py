@@ -1,5 +1,4 @@
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
 from app.api.errors import api_error_response
 from app.api.models.requests import EvaluateRequest
@@ -13,8 +12,8 @@ from app.services.provider import (
 router = APIRouter(prefix="", tags=["evaluation"])
 
 
-@router.post("/evaluate-response")
-def evaluate_response(req: EvaluateRequest) -> dict | JSONResponse:
+@router.post("/evaluate-response", response_model=None)
+def evaluate_response(req: EvaluateRequest):
     """
     Temporary Phase 1 route.
 

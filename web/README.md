@@ -37,4 +37,4 @@ If unset, the frontend falls back to `http://localhost:8010`.
 
 - `src/app/page.tsx` - learner flow UI and API calls
 - `src/app/layout.tsx` - app metadata and root layout
-- `src/app/globals.css` - shared global styles
+- `src/app/globals.scss` - shared global styles

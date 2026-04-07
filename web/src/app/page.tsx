@@ -45,14 +45,7 @@ type Evaluation = {
   misconception: string | null;
 };
 
-type ApiErrorResponse = {
-  detail?: string | { message?: string };
-  error?: {
-    type?: string;
-    source?: string;
-    retryable?: boolean;
-  };
-};
+type RequestState = 'idle' | 'generating' | 'evaluating';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, '') ?? 'http://localhost:8010';
@@ -63,25 +56,76 @@ const NEXT_ACTION_LABELS: Record<string, string> = {
   review: 'Review the concept first',
 };
 
-function getApiErrorMessage(payload: ApiErrorResponse, fallback: string): string {
+const EXAMPLE_GOALS = [
+  'Learn Python loops',
+  'Understand SQL joins',
+  'Practice writing clear commit messages',
+];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isLesson(payload: unknown): payload is Lesson {
+  return (
+    isRecord(payload) &&
+    typeof payload.lesson_id === 'string' &&
+    typeof payload.goal === 'string' &&
+    typeof payload.title === 'string' &&
+    isRecord(payload.task) &&
+    typeof payload.task.prompt === 'string'
+  );
+}
+
+function isEvaluation(payload: unknown): payload is Evaluation {
+  return (
+    isRecord(payload) &&
+    typeof payload.lesson_id === 'string' &&
+    typeof payload.feedback === 'string' &&
+    typeof payload.score === 'number' &&
+    typeof payload.correct === 'boolean'
+  );
+}
+
+async function parseApiPayload(response: Response): Promise<unknown> {
+  const raw = await response.text();
+
+  if (!raw.trim()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw) as unknown;
+  } catch {
+    throw new Error('The server returned invalid JSON. Please try again.');
+  }
+}
+
+function getApiErrorMessage(payload: unknown, fallback: string): string {
+  if (!isRecord(payload)) {
+    return fallback;
+  }
+
+  const detail = payload.detail;
   if (typeof payload.detail === 'string' && payload.detail.trim()) {
     return payload.detail;
   }
 
   if (
-    payload.detail &&
-    typeof payload.detail === 'object' &&
-    typeof payload.detail.message === 'string' &&
-    payload.detail.message.trim()
+    isRecord(detail) &&
+    typeof detail.message === 'string' &&
+    detail.message.trim()
   ) {
-    return payload.detail.message;
+    return detail.message;
   }
 
-  if (payload.error?.type === 'provider_schema_error') {
+  const error = isRecord(payload.error) ? payload.error : null;
+
+  if (error?.type === 'provider_schema_error') {
     return 'The model returned malformed data. Please try again.';
   }
 
-  if (payload.error?.type === 'provider_response_error') {
+  if (error?.type === 'provider_response_error') {
     return 'The model response could not be parsed. Please try again.';
   }
 
@@ -93,11 +137,23 @@ export default function HomePage() {
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [response, setResponse] = useState('');
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [requestState, setRequestState] = useState<RequestState>('idle');
   const [error, setError] = useState<string | null>(null);
+  const trimmedGoal = goal.trim();
+  const trimmedResponse = response.trim();
+  const isGenerating = requestState === 'generating';
+  const isEvaluating = requestState === 'evaluating';
+  const isBusy = requestState !== 'idle';
 
   const handleGenerate = async () => {
-    setLoading(true);
+    if (!trimmedGoal) {
+      setError('Enter a learning goal before generating a lesson.');
+      return;
+    }
+
+    setRequestState('generating');
+    setLesson(null);
+    setResponse('');
     setEvaluation(null);
     setError(null);
 
@@ -105,29 +161,36 @@ export default function HomePage() {
       const res = await fetch(`${API_BASE_URL}/generate-lesson`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ goal }),
+        body: JSON.stringify({ goal: trimmedGoal }),
       });
 
-      const data: Lesson | ApiErrorResponse = await res.json();
+      const data = await parseApiPayload(res);
 
       if (!res.ok) {
         throw new Error(getApiErrorMessage(data, 'Unable to generate lesson.'));
       }
 
-      setLesson(data as Lesson);
-      setResponse('');
+      if (!isLesson(data)) {
+        throw new Error('The API returned an unexpected lesson payload.');
+      }
+
+      setLesson(data);
     } catch (err) {
       setLesson(null);
       setError(err instanceof Error ? err.message : 'Unable to generate lesson.');
     } finally {
-      setLoading(false);
+      setRequestState('idle');
     }
   };
 
   const handleEvaluate = async () => {
     if (!lesson) return;
+    if (!trimmedResponse) {
+      setError('Write a response before requesting evaluation.');
+      return;
+    }
 
-    setLoading(true);
+    setRequestState('evaluating');
     setError(null);
 
     try {
@@ -136,22 +199,26 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           lesson,
-          learner_response: response,
+          learner_response: trimmedResponse,
         }),
       });
 
-      const data: Evaluation | ApiErrorResponse = await res.json();
+      const data = await parseApiPayload(res);
 
       if (!res.ok) {
         throw new Error(getApiErrorMessage(data, 'Unable to evaluate response.'));
       }
 
-      setEvaluation(data as Evaluation);
+      if (!isEvaluation(data)) {
+        throw new Error('The API returned an unexpected evaluation payload.');
+      }
+
+      setEvaluation(data);
     } catch (err) {
       setEvaluation(null);
       setError(err instanceof Error ? err.message : 'Unable to evaluate response.');
     } finally {
-      setLoading(false);
+      setRequestState('idle');
     }
   };
 
@@ -191,14 +258,46 @@ export default function HomePage() {
                   id="goal"
                   className={styles.input}
                   value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
+                  onChange={(e) => {
+                    setGoal(e.target.value);
+                    if (error) {
+                      setError(null);
+                    }
+                  }}
                   placeholder="Learn Python loops"
                 />
+                <p className={styles.fieldHint}>
+                  Aim for one teachable step, not an entire subject.
+                </p>
+              </div>
+
+              <div className={styles.examples}>
+                <span className={styles.examplesLabel}>Try a starter goal</span>
+                <div className={styles.exampleList}>
+                  {EXAMPLE_GOALS.map((exampleGoal) => (
+                    <button
+                      key={exampleGoal}
+                      className={styles.exampleChip}
+                      type="button"
+                      onClick={() => {
+                        setGoal(exampleGoal);
+                        setError(null);
+                      }}
+                      disabled={isBusy}
+                    >
+                      {exampleGoal}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className={styles.buttonRow}>
-                <button className={styles.button} onClick={handleGenerate} disabled={loading}>
-                  {loading ? 'Generating lesson...' : 'Generate lesson'}
+                <button
+                  className={styles.button}
+                  onClick={handleGenerate}
+                  disabled={isBusy || trimmedGoal.length === 0}
+                >
+                  {isGenerating ? 'Generating lesson...' : 'Generate lesson'}
                 </button>
               </div>
 
@@ -304,14 +403,18 @@ export default function HomePage() {
                 </div>
 
                 <div className={styles.buttonRow}>
-                  <button className={styles.button} onClick={handleEvaluate} disabled={loading}>
-                    {loading ? 'Evaluating response...' : 'Evaluate response'}
+                  <button
+                    className={styles.button}
+                    onClick={handleEvaluate}
+                    disabled={isBusy || trimmedResponse.length === 0}
+                  >
+                    {isEvaluating ? 'Evaluating response...' : 'Evaluate response'}
                   </button>
                   <button
                     className={`${styles.button} ${styles.ghostButton}`}
                     type="button"
                     onClick={() => setResponse('')}
-                    disabled={loading || response.length === 0}
+                    disabled={isBusy || response.length === 0}
                   >
                     Clear response
                   </button>
@@ -330,7 +433,7 @@ export default function HomePage() {
               <dl className={styles.summary}>
                 <div className={styles.metric}>
                   <dt>Goal</dt>
-                  <dd>{goal.trim() || 'Waiting for input'}</dd>
+                  <dd>{trimmedGoal || 'Waiting for input'}</dd>
                 </div>
                 <div className={styles.metric}>
                   <dt>Lesson</dt>

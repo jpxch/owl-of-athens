@@ -1,140 +1,81 @@
 # Owl of Athens
 
-Owl of Athens is a local-first AI learning engine designed to guide a learner through a structured loop:
+Owl of Athens is a local-first AI learning engine built around one tight loop:
 
-goal → lesson → response → evaluation
+goal -> lesson -> response -> evaluation
 
----
+It is not a chatbot. The system is designed to teach one concrete step at a time, evaluate the learner's response, and suggest what should happen next.
 
-## What This Is
+## Current State
 
-Owl of Athens is not a chatbot.
+The teaching-loop spine is implemented today:
 
-It is a teaching system built around a core loop:
+- `GET /health`
+- `POST /generate-lesson`
+- `POST /evaluate-response`
+- schema-backed provider validation for lessons and evaluations
+- a learner-facing Next.js flow for goal entry, lesson review, response submission, and evaluation display
 
-1. A learner provides a goal
-2. The system generates a structured lesson
-3. The learner completes a task
-4. The system evaluates the response
-5. Feedback determines the next step
-
-The focus is not conversation — it is progression.
-
----
-
-## System Architecture
-
-- API (`api/`)
-  - FastAPI backend
-  - Orchestration layer
-  - Validation (schema enforcement)
-  - Future persistence
-
-- Atlas (`atlas`)
-  - Model inference layer
-  - LLM execution (OpenAI / local models)
-
-- Web (`web/`)
-  - Next.js frontend
-  - Learner interface
-
-- Contracts (`core/contracts/`)
-  - Lesson schema
-  - Evaluation schema
-  - Atlas interface contract
-
----
-
-## Runtime Model
-
-- API runs on: continuum-mini
-- Model execution runs on: atlas
-- Communication: HTTP (JSON)
-- Configuration: environment-driven
-
----
-
-## Local Development
-
-Start the API:
-
-    make api-dev
-
-Default URL:
-
-    http://localhost:8010
-
-Health check:
-
-    GET /health
-
-Start the web app:
-
-    make web-dev
-
----
+The current milestone is to harden and verify that loop end to end before starting persistence, adaptive curriculum work, or broader product scope.
 
 ## Project Structure
 
-    api/              FastAPI backend
-    web/              Next.js frontend
-    core/contracts/   system contracts (lesson, evaluation, atlas)
-    atlas-runtime/    future inference service
-    infra/            deployment + environment
+```text
+api/              FastAPI backend and provider orchestration
+web/              Next.js learner interface
+core/contracts/   canonical lesson and evaluation schemas
+atlas-runtime/    future inference runtime work
+infra/            environment and deployment support
+```
 
----
+## Local Development
 
-## Current Status
+From the repo root:
 
-Phase: 0.5 — Spine Preparation
+```bash
+make api-dev
+make web-dev
+```
 
-What exists:
+Default local URLs:
 
-- Contracts defined (lesson + evaluation)
-- Atlas runtime contract stub
-- Backend bootstrapped (FastAPI + config)
-- Local development workflow
+- API: `http://localhost:8010`
+- Web: `http://localhost:3000`
 
-What is not built yet:
+## Environment
 
-- Lesson generation endpoint
-- Evaluation endpoint
-- Database / persistence
-- Curriculum logic
+The repo expects configuration in `.env` for the API and optionally `.env.local` for the web app.
 
----
+Common variables:
 
-## Goal of Phase 0.5
+- `DATABASE_URL`
+- `MODEL_PROVIDER`
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL`
+- `ATLAS_BASE_URL`
+- `OLLAMA_BASE_URL`
+- `NEXT_PUBLIC_API_BASE_URL`
 
-Prove the core loop works:
+If `NEXT_PUBLIC_API_BASE_URL` is unset, the web app falls back to `http://localhost:8010`.
 
-Can a learner input a goal and receive:
+## Verification
 
-- a clear lesson
-- a meaningful task
-- actionable feedback
+Typical local checks:
 
-If this loop fails, the system fails.
-
----
-
-## Next Steps
-
-- Implement POST /generate-lesson
-- Implement POST /evaluate-response
-- Validate outputs against contracts
-- Test the loop manually end-to-end
-
----
+```bash
+cd api && uv run pytest
+cd web && pnpm lint
+cd web && pnpm exec tsc --noEmit
+```
 
 ## Design Principle
 
-Build the smallest possible working teaching loop first.
+Build the smallest believable teaching loop first.
 
-Do not optimize for:
+Keep the product focused on:
 
-- multi-user systems
-- adaptive learning
-- curriculum graphs
+- clear lesson generation
+- constrained learner tasks
+- actionable evaluation feedback
 
-until the core experience feels correct.
+Defer persistence, multi-user state, and adaptive curriculum systems until the core loop feels reliable.
